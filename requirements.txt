@@ -1,0 +1,6 @@
+flask 
+PyMySQL 
+flask-mysql 
+flask_restful  
+mysql-connector-python-rf 
+mysql-connector
