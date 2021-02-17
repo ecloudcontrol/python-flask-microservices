@@ -1,19 +1,22 @@
-from flask import Flask, Response, render_template,jsonify,request
-import pymysql,json
-from flask_restful import Resource, Api , reqparse, abort, marshal, fields
-import os,logging
-from flaskext.mysql import MySQL
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+from flask import Flask, jsonify
+from flask_restful import Resource, Api, reqparse, abort
+import pymysql
+import os
+import logging
 import mysql.connector as mysql
-from json import dumps, loads, JSONEncoder, JSONDecoder
 app = Flask(__name__)
 api = Api(app)
+HOST = os.environ['MYSQL_HOST']
+USER = os.environ['MYSQL_USER']
+PASSWORD = os.environ['MYSQL_PASSWORD_KEY']
+DATABASE = os.environ['MYSQL_DATABASE']
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)s APP %(threadName)s : %(message)s'
+                    )
 
-HOST=os.environ["MYSQL_HOST"]
-USER=os.environ["MYSQL_USER"]
-PASSWORD=os.environ['MYSQL_PASSWORD_KEY']
-DATABASE=os.environ["MYSQL_DATABASE"]
-
-logging.basicConfig(level=logging.DEBUG,format="%(asctime)s %(levelname)s APP %(threadName)s : %(message)s")
 
 class MyConverter(mysql.conversion.MySQLConverter):
 
@@ -25,133 +28,193 @@ class MyConverter(mysql.conversion.MySQLConverter):
                 return col.decode('utf-8')
             return col
 
-        return[to_unicode(col) for col in row]
+        return [to_unicode(col) for col in row]
+
 
 class Apidatadelete(Resource):
+
     def __init__(self):
-        # Initialize The Flsak Request Parser and add arguments as in an expected request
+
+
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument("username", type=str, required=True, help="The keyword delete", location="json")
-        conn = None
-        cursor = None
-        conn = mysql.connect(converter_class=MyConverter,host=HOST, database=DATABASE,user=USER, password=PASSWORD)
-        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        self.reqparse.add_argument('id', type=str, required=True,
+                                   help='The ID of  user to delete',
+                                   location='json')
+        conn = cursor = None
         super(Apidatadelete, self).__init__()
+
     def delete(self, user):
         args = self.reqparse.parse_args()
-        datauser=args['username']
-        if user == None or datauser == "":
-            app.logger.warning("Enter Name to Delete")
-            return "Enter Name to Delete" ,404
+        datauser = args['id']
+        if user == None or datauser == '':
+            app.logger.warning('Enter Name to Delete')
+            return ('Enter Name to Delete', 404)
         if user != datauser:
-            app.logger.warning("Enter data username and url username mismatch ")
-            return "Enter data username and url username mismatch " ,404
-        conn = mysql.connect(converter_class=MyConverter,host=HOST, database=DATABASE,user=USER, password=PASSWORD)
+            app.logger.warning('Enter data username and url username mismatch '
+                               )
+            return ('Enter data username and url username mismatch ',
+                    404)
+        conn = mysql.connect(converter_class=MyConverter, host=HOST,
+                             database=DATABASE, user=USER,
+                             password=PASSWORD)
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = 'MyUsers'".format(DATABASE))
+        cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = 'ACCOUNT'".format(DATABASE))
         r = cursor.fetchall()
-        if r[0][0] < 1 :
-            return "NO table"
-        cursor.execute("SELECT username FROM MyUsers where username='{}' ".format(datauser))
+        if r[0][0] < 1:
+            return 'NO table'
+        cursor.execute('SELECT NAME FROM ACCOUNT where ID={} '.format(datauser))
         result1 = cursor.fetchall()
-        cursor.execute("DELETE FROM MyUsers WHERE username='{}' ".format(str(datauser)))
+        cursor.execute('DELETE FROM ACCOUNT WHERE ID={} '.format(str(datauser)))
         conn.commit()
-        cursor.execute("SELECT username FROM MyUsers where username='{}' ".format(datauser))
+        cursor.execute('SELECT NAME FROM ACCOUNT where ID={} '.format(datauser))
         result = cursor.fetchall()
         if result == [] and result1 != []:
-            app.logger.info("DATA -- Successfull Deleted...")
-            return  jsonify({"Data Deleted ":datauser})
+            app.logger.info('DATA -- Successfull Deleted...')
+            return jsonify({'Data Deleted ': datauser})
         else:
-            app.logger.warning("DATA -- Not Deleted...")
-            return jsonify({"Data already deleted or doesn't exsist":result})
+            app.logger.warning('DATA -- Not Deleted...')
+            return jsonify({"Data already deleted or doesn't exsist": result})
+
+
 class Apigetdata(Resource):
+
     def __init__(self):
-        # Initialize The Flsak Request Parser and add arguments as in an expected request
+
+
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument("username", type=str, required=True, help="The Keyword all", location="json")
-        conn = None
-        cursor = None
-        conn = mysql.connect(converter_class=MyConverter,host=HOST, database=DATABASE,user=USER, password=PASSWORD)
-        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        self.reqparse.add_argument('id', type=str, required=True,
+                                   help='The Keyword all',
+                                   location='json')
+        conn = cursor = None
         super(Apigetdata, self).__init__()
-    def get(self,user):
+
+    def get(self, user):
         duser = user
         if duser is None:
             abort(404)
-        conn = mysql.connect(converter_class=MyConverter,host=HOST,database=DATABASE, user=USER, password=PASSWORD)
+        conn = mysql.connect(converter_class=MyConverter, host=HOST,
+                             database=DATABASE, user=USER,
+                             password=PASSWORD)
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = 'MyUsers'".format(DATABASE))
+        cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = 'ACCOUNT'".format(DATABASE))
         r = cursor.fetchall()
-        if r[0][0] < 1 :
-            return "NO table"
+        if r[0][0] < 1:
+            sample()
 
-        json_data=[]
+
+        json_data = []
         resultjson = []
-        if duser == "all":
-            cursor.execute("SELECT * FROM MyUsers ")
-            row_headers=[x[0] for x in cursor.description]
+        if duser == 'all':
+            cursor.execute('SELECT * FROM ACCOUNT ')
+            row_headers = [x[0] for x in cursor.description]
             result = cursor.fetchall()
             for x in result:
-                json_data.append(dict(zip(row_headers,x)))
+                json_data.append(dict(zip(row_headers, x)))
         else:
-            cursor.execute("SELECT * FROM MyUsers where username='{}' ".format(duser))
-            row_headers=[x[0] for x in cursor.description]
+            cursor.execute("SELECT * FROM ACCOUNT where id='{}' ".format(duser))
+            row_headers = [x[0] for x in cursor.description]
             result = cursor.fetchall()
             for x in result:
-                json_data.append(dict(zip(row_headers,x)))
-
-        if json_data != [] :
-            resultjson= str(json_data)[1:-1].strip()
+                json_data.append(dict(zip(row_headers, x)))
+        if json_data != []:
+            resultjson = str(json_data)[1:-1].strip()
         elif json_data == []:
-            resultjason = "NO DATA"
+            resultjason = 'NO DATA'
         else:
             resultjason = json_data
-        if duser in resultjson or duser == "all":
+        if duser in resultjson or duser == 'all':
             if resultjson == []:
-                app.logger.info("DATA -- Found For request "+duser+" Output: NO DATA ")
-                return  jsonify({"data":resultjson})
+                app.logger.info('DATA -- Found For request ' + duser
+                                + ' Output: NO DATA ')
+                return jsonify({'data': resultjson})
             else:
-                app.logger.info("DATA -- Found For request "+duser+" Output: "+resultjson)
-                return  jsonify({"data":resultjson})
+                app.logger.info('DATA -- Found For request ' + duser
+                                + ' Output: ' + resultjson)
+                return jsonify({'data': resultjson})
         else:
-            app.logger.info("DATA -- NOT Found in Database "+ duser)
-            return  jsonify({"message":"data not found in db" , "value" : duser})
+            app.logger.info('DATA -- NOT Found in Database ' + duser)
+            return jsonify({'message': 'data not found in db',
+                           'value': duser})
+
+
 class Apipostdata(Resource):
 
     def __init__(self):
-        # Initialize The Flsak Request Parser and add arguments as in an expected request
+
+
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument("username", type=str, required=True, help="The Username", location="json")
-        conn = None
-        cursor = None
-        conn = mysql.connect(converter_class=MyConverter,host=HOST,database=DATABASE, user=USER, password=PASSWORD)
-        cursor = conn.cursor()
+        self.reqparse.add_argument('id', type=int, required=True,
+                                   help='The User ID ', location='json')
+        self.reqparse.add_argument('name', type=str, required=True,
+                                   help='The Username', location='json')
+        self.reqparse.add_argument('fullname', type=str, required=True,
+                                   help='The Users fullname',
+                                   location='json')
+        self.reqparse.add_argument('login', type=str, required=True,
+                                   help='The Users login ID',
+                                   location='json')
+        self.reqparse.add_argument('email', type=str, required=True,
+                                   help='The User email ID',
+                                   location='json')
+        conn = cursor = None
         super(Apipostdata, self).__init__()
 
-    def post(self,user):
+    def post(self, user):
         args = self.reqparse.parse_args()
-        datauser=args['username']
-        if user == None and datauser == "":
+        dataid = args['id']
+        datname = args['name']
+        datafullname = args['fullname']
+        datalogin = args['login']
+        dataemail = args['email']
+        if user == None and datname == '':
             abort(404)
-        if user != datauser:
-            app.logger.warning("Entered data username and url username mismatch ")
-            return "Enter data username and url username mismatch " ,404
-        conn = mysql.connect(converter_class=MyConverter,host=HOST,database=DATABASE, user=USER, password=PASSWORD)
+        if user != datname:
+            app.logger.warning('Entered data username and url username mismatch '
+                               )
+            return ('Enter data username and url username mismatch ',
+                    404)
+        conn = mysql.connect(converter_class=MyConverter, host=HOST,
+                             database=DATABASE, user=USER,
+                             password=PASSWORD)
         cursor = conn.cursor()
-        cursor.execute("CREATE TABLE  IF NOT EXISTS MyUsers ( userid INT NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(100) ,submission_date DATE)")
-        cursor.execute("INSERT INTO MyUsers(username,submission_date)VALUES('{}',NOW())".format(datauser))
+        cursor.execute('CREATE TABLE  IF NOT EXISTS MyUsers ( userid INT NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(100) ,submission_date DATE)'
+                       )
+
+
+        cursor.execute("INSERT INTO ACCOUNT Values({},'{}','{}','{}','{}')".format(dataid,
+                       datname, datafullname, datalogin, dataemail))
         conn.commit()
         cursor.close()
         conn.close()
-        resultjson= str(args).strip()
-        app.logger.info("DATA -- Successfully Posted the Data "+ resultjson +" in database")
-        return jsonify({"Data posted ":resultjson})
+        resultjson = str(args).strip()
+        app.logger.info('DATA -- Successfully Posted the Data '
+                        + resultjson + ' in database')
+        return jsonify({'Data posted ': resultjson})
 
 
-api.add_resource(Apipostdata, "/find/create/<string:user>")
-api.add_resource(Apigetdata, "/find/user/<string:user>")
-api.add_resource(Apidatadelete, "/find/delete/<string:user>")
+api.add_resource(Apipostdata, '/find/create/user/<string:user>')
+api.add_resource(Apigetdata, '/find/userid/<string:user>')
+api.add_resource(Apidatadelete, '/find/delete/userid/<string:user>')
+
+
+def sample():
+    conn = mysql.connect(converter_class=MyConverter, host=HOST,
+                         database=DATABASE, user=USER,
+                         password=PASSWORD)
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = 'ACCOUNT'".format(DATABASE))
+    r = cursor.fetchall()
+    if r[0][0] < 1:
+        with open('./create_account_model.sql', 'r',
+                  encoding='utf-8') as sql_file:
+            data = sql_file.read().split(';')
+            app.logger.info(data)
+            for d in data:
+                if d and d.strip():
+                    app.logger.info(d)
+                    cursor.execute(d)
+            conn.commit()
+
 
 if __name__ == '__main__':
-    app.run(use_reloader=True,host="0.0.0.0",port=8080)
-
+    app.run(use_reloader=True, host='0.0.0.0', port=8080)
