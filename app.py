@@ -196,6 +196,9 @@ api.add_resource(Apipostdata, '/find/create/user/<string:user>')
 api.add_resource(Apigetdata, '/find/userid/<string:user>')
 api.add_resource(Apidatadelete, '/find/delete/userid/<string:user>')
 
+@app.route('/')
+def welcome():
+    return "<h1>Hello Welcome To APPZ Webserver </h1>"
 
 def sample():
     conn = mysql.connect(converter_class=MyConverter, host=HOST,
