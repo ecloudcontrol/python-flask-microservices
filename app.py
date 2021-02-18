@@ -16,7 +16,7 @@ DATABASE = os.environ['MYSQL_DATABASE']
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s APP %(threadName)s : %(message)s'
                     )
-
+table=""
 
 class MyConverter(mysql.conversion.MySQLConverter):
 
@@ -96,7 +96,7 @@ class Apigetdata(Resource):
                              database=DATABASE, user=USER,
                              password=PASSWORD)
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = 'ACCOUNT'".format(DATABASE))
+        cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = '{}'".format(DATABASE,table))
         r = cursor.fetchall()
         if r[0][0] < 1:
             sample()
@@ -205,7 +205,23 @@ def sample():
                          database=DATABASE, user=USER,
                          password=PASSWORD)
     cursor = conn.cursor(pymysql.cursors.DictCursor)
-    cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = 'ACCOUNT'".format(DATABASE))
+    with open('./create_account_model.sql', 'r',
+                  encoding='utf-8') as sql_file:
+        data = sql_file.read().split(';')
+    flag = 0
+    txt=data[0]
+    global table
+    x = txt.split(" ")
+    for d in x:
+        if d == 'TABLE' or d == 'table' or flag == 1:
+            if flag == 1:
+                table=d
+                break;
+            else:
+                flag = 1
+    app.logger.info("table is :" + table)
+
+    cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = '{}'".format(DATABASE,table))
     r = cursor.fetchall()
     if r[0][0] < 1:
         with open('./create_account_model.sql', 'r',
