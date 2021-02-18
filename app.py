@@ -58,7 +58,7 @@ class Apidatadelete(Resource):
                              database=DATABASE, user=USER,
                              password=PASSWORD)
         cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = 'ACCOUNT'".format(DATABASE))
+        cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = '{}'".format(DATABASE,table))
         r = cursor.fetchall()
         if r[0][0] < 1:
             return 'NO table'
