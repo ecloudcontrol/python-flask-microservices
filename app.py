@@ -25,10 +25,33 @@ def getuser(user):
     conn = mysql.connect(host=HOST,database=DATABASE, 
                             user=USER,password=PASSWORD)
     cursor = conn.cursor()
+    with open('./create_account_model.sql', 'r',
+                  encoding='utf-8') as sql_file:
+        data = sql_file.read().split(';')
+    flag = 0
+    txt=data[0]
+    x = txt.split(" ")
+    table=None
+    for d in x:
+        if d == 'TABLE' or d == 'table' or flag == 1:
+            if flag == 1:
+                table=d
+                break;
+            else:
+                flag = 1
+    app.logger.info("Table is :" + table)
     cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = '{}'".format(DATABASE,table))
     r = cursor.fetchall()
     if r[0][0] < 1:
-        table=sample(conn,cursor)
+        with open('./create_account_model.sql', 'r',
+                  encoding='utf-8') as sql_file:
+            data = sql_file.read().split(';')
+            app.logger.info(data)
+            for d in data:
+                if d and d.strip():
+                    app.logger.info(d)
+                    cursor.execute(d)
+            conn.commit()
     if duser == 'all':
         cursor.execute("SELECT * FROM {}".format(table))
         row_headers = [x[0] for x in cursor.description]
@@ -60,37 +83,6 @@ def getuser(user):
         app.logger.info('DATA -- NOT Found in Database ' + duser)
         return jsonify({'message': 'data not found in db',
                        'value': duser})
-
-
-def sample(conn, cursor):
-    with open('./create_account_model.sql', 'r',
-                  encoding='utf-8') as sql_file:
-        data = sql_file.read().split(';')
-    flag = 0
-    txt=data[0]
-    global table
-    x = txt.split(" ")
-    for d in x:
-        if d == 'TABLE' or d == 'table' or flag == 1:
-            if flag == 1:
-                table=d
-                break;
-            else:
-                flag = 1
-    app.logger.info("table is :" + table)
-    cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = '{}'".format(DATABASE,table))
-    r = cursor.fetchall()
-    if r[0][0] < 1:
-        with open('./create_account_model.sql', 'r',
-                  encoding='utf-8') as sql_file:
-            data = sql_file.read().split(';')
-            app.logger.info(data)
-            for d in data:
-                if d and d.strip():
-                    app.logger.info(d)
-                    cursor.execute(d)
-            conn.commit()
-    return table 
 
 
 if __name__ == '__main__':
