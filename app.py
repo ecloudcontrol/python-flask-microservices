@@ -7,20 +7,19 @@ import os
 import logging
 import mysql.connector as mysql
 app = Flask(__name__)
-HOST = os.environ['MYSQL_HOST']
-USER = os.environ['MYSQL_USER']
-PASSWORD = os.environ['MYSQL_PASSWORD_KEY']
-DATABASE = os.environ['MYSQL_DATABASE']
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s APP %(threadName)s : %(message)s'
                     )
-table=None
 
 @app.route('/account/<string:user>/')
 def getuser(user):
     duser = user
     json_data = []
     resultjson = []
+    HOST = os.environ['MYSQL_HOST']
+    USER = os.environ['MYSQL_USER']
+    PASSWORD = os.environ['MYSQL_PASSWORD_KEY']
+    DATABASE = os.environ['MYSQL_DATABASE']
     if duser is None:
         return "<h1>No User</h1>",404
     conn = mysql.connect(host=HOST,database=DATABASE, 
@@ -29,7 +28,7 @@ def getuser(user):
     cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = '{}'".format(DATABASE,table))
     r = cursor.fetchall()
     if r[0][0] < 1:
-        sample()
+        table=sample(conn,cursor)
     if duser == 'all':
         cursor.execute("SELECT * FROM {}".format(table))
         row_headers = [x[0] for x in cursor.description]
@@ -63,14 +62,7 @@ def getuser(user):
                        'value': duser})
 
 
-@app.route('/')
-def welcome():
-    return "<h1>Hello Welcome To APPZ Webserver </h1>"
-
-def sample():
-    conn = mysql.connect(host=HOST,database=DATABASE,
-                            user=USER, password=PASSWORD)
-    cursor = conn.cursor()
+def sample(conn, cursor):
     with open('./create_account_model.sql', 'r',
                   encoding='utf-8') as sql_file:
         data = sql_file.read().split(';')
@@ -86,7 +78,6 @@ def sample():
             else:
                 flag = 1
     app.logger.info("table is :" + table)
-
     cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = '{}'".format(DATABASE,table))
     r = cursor.fetchall()
     if r[0][0] < 1:
@@ -99,6 +90,7 @@ def sample():
                     app.logger.info(d)
                     cursor.execute(d)
             conn.commit()
+    return table 
 
 
 if __name__ == '__main__':
