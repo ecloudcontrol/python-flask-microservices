@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask, jsonify
-#import pymysql
 import os
 import logging
 import mysql.connector as mysql
@@ -25,41 +24,14 @@ def getuser(user):
     conn = mysql.connect(host=HOST,database=DATABASE, 
                             user=USER,password=PASSWORD)
     cursor = conn.cursor()
-    with open('./create_account_model.sql', 'r',
-                  encoding='utf-8') as sql_file:
-        data = sql_file.read().split(';')
-    flag = 0
-    txt=data[0]
-    x = txt.split(" ")
-    table=None
-    for d in x:
-        if d == 'TABLE' or d == 'table' or flag == 1:
-            if flag == 1:
-                table=d
-                break;
-            else:
-                flag = 1
-    app.logger.info("Table is :" + table)
-    cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = '{}'".format(DATABASE,table))
-    r = cursor.fetchall()
-    if r[0][0] < 1:
-        with open('./create_account_model.sql', 'r',
-                  encoding='utf-8') as sql_file:
-            data = sql_file.read().split(';')
-            app.logger.info(data)
-            for d in data:
-                if d and d.strip():
-                    app.logger.info(d)
-                    cursor.execute(d)
-            conn.commit()
     if duser == 'all':
-        cursor.execute("SELECT * FROM {}".format(table))
+        cursor.execute("SELECT * FROM ACCOUNT")
         row_headers = [x[0] for x in cursor.description]
         result = cursor.fetchall()
         for x in result:
             json_data.append(dict(zip(row_headers, x)))
     else:
-        cursor.execute("SELECT * FROM {} where NAME='{}' ".format(table,duser))
+        cursor.execute("SELECT * FROM ACCOUNT where NAME='{}' ".format(duser))
         row_headers = [x[0] for x in cursor.description]
         result = cursor.fetchall()
         for x in result:

@@ -1,5 +1,2 @@
 flask 
-PyMySQL 
-flask-mysql 
-flask_restful  
 mysql-connector
