@@ -85,5 +85,3 @@ def getuser(user):
                        'value': duser})
 
 
-if __name__ == '__main__':
-    app.run(use_reloader=True, host='0.0.0.0', port=8080)
