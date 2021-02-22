@@ -105,7 +105,7 @@ class Apigetdata(Resource):
             for x in result:
                 json_data.append(dict(zip(row_headers, x)))
         else:
-            cursor.execute("SELECT * FROM {} where id='{}' ".format(table,duser))
+            cursor.execute("SELECT * FROM {} where NAME='{}' ".format(table,duser))
             row_headers = [x[0] for x in cursor.description]
             result = cursor.fetchall()
             for x in result:
