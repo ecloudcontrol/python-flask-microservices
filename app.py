@@ -181,8 +181,8 @@ class Apipostdata(Resource):
         return jsonify({'Data posted ': resultjson})
 
 
-api.add_resource(Apipostdata, '/account/<string:user>')
-api.add_resource(Apigetdata, '/account/post')
+api.add_resource(Apigetdata, '/account/<string:user>')
+api.add_resource(Apipostdata, '/account/post')
 api.add_resource(Apidatadelete, '/account/delete')
 
 @app.route('/')
