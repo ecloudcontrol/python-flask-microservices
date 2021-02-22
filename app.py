@@ -43,17 +43,12 @@ class Apidatadelete(Resource):
         conn = cursor = None
         super(Apidatadelete, self).__init__()
 
-    def delete(self, user):
+    def delete(self):
         args = self.reqparse.parse_args()
         datauser = args['id']
-        if user == None or datauser == '':
+        if datauser == '':
             app.logger.warning('Enter Name to Delete')
             return ('Enter Name to Delete', 404)
-        if user != datauser:
-            app.logger.warning('Enter data username and url username mismatch '
-                               )
-            return ('Enter data username and url username mismatch ',
-                    404)
         conn = mysql.connect(converter_class=MyConverter, host=HOST,
                              database=DATABASE, user=USER,
                              password=PASSWORD)
@@ -62,11 +57,11 @@ class Apidatadelete(Resource):
         r = cursor.fetchall()
         if r[0][0] < 1:
             return 'NO table'
-        cursor.execute('SELECT NAME FROM ACCOUNT where ID={} '.format(datauser))
+        cursor.execute('SELECT NAME FROM {} where ID={} '.format(table,datauser))
         result1 = cursor.fetchall()
-        cursor.execute('DELETE FROM ACCOUNT WHERE ID={} '.format(str(datauser)))
+        cursor.execute('DELETE FROM {} WHERE ID={} '.format(table,str(datauser)))
         conn.commit()
-        cursor.execute('SELECT NAME FROM ACCOUNT where ID={} '.format(datauser))
+        cursor.execute('SELECT NAME FROM {} where ID={} '.format(table,datauser))
         result = cursor.fetchall()
         if result == [] and result1 != []:
             app.logger.info('DATA -- Successfull Deleted...')
@@ -101,17 +96,16 @@ class Apigetdata(Resource):
         if r[0][0] < 1:
             sample()
 
-
         json_data = []
         resultjson = []
         if duser == 'all':
-            cursor.execute('SELECT * FROM ACCOUNT ')
+            cursor.execute("SELECT * FROM '{}'".format(table))
             row_headers = [x[0] for x in cursor.description]
             result = cursor.fetchall()
             for x in result:
                 json_data.append(dict(zip(row_headers, x)))
         else:
-            cursor.execute("SELECT * FROM ACCOUNT where id='{}' ".format(duser))
+            cursor.execute("SELECT * FROM {} where id='{}' ".format(table,duser))
             row_headers = [x[0] for x in cursor.description]
             result = cursor.fetchall()
             for x in result:
@@ -159,29 +153,24 @@ class Apipostdata(Resource):
         conn = cursor = None
         super(Apipostdata, self).__init__()
 
-    def post(self, user):
+    def post(self):
         args = self.reqparse.parse_args()
         dataid = args['id']
         datname = args['name']
         datafullname = args['fullname']
         datalogin = args['login']
         dataemail = args['email']
-        if user == None and datname == '':
+        if datname == '':
             abort(404)
-        if user != datname:
-            app.logger.warning('Entered data username and url username mismatch '
-                               )
-            return ('Enter data username and url username mismatch ',
-                    404)
         conn = mysql.connect(converter_class=MyConverter, host=HOST,
                              database=DATABASE, user=USER,
                              password=PASSWORD)
         cursor = conn.cursor()
-        cursor.execute('CREATE TABLE  IF NOT EXISTS MyUsers ( userid INT NOT NULL AUTO_INCREMENT PRIMARY KEY, username VARCHAR(100) ,submission_date DATE)'
-                       )
-
-
-        cursor.execute("INSERT INTO ACCOUNT Values({},'{}','{}','{}','{}')".format(dataid,
+        cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '{}' AND table_name = '{}'".format(DATABASE,table))
+        r = cursor.fetchall()
+        if r[0][0] < 1:
+            sample()
+        cursor.execute("INSERT INTO {} Values({},'{}','{}','{}','{}')".format(table,dataid,
                        datname, datafullname, datalogin, dataemail))
         conn.commit()
         cursor.close()
@@ -192,9 +181,9 @@ class Apipostdata(Resource):
         return jsonify({'Data posted ': resultjson})
 
 
-api.add_resource(Apipostdata, '/find/create/user/<string:user>')
-api.add_resource(Apigetdata, '/find/userid/<string:user>')
-api.add_resource(Apidatadelete, '/find/delete/userid/<string:user>')
+api.add_resource(Apipostdata, '/account/<string:user>')
+api.add_resource(Apigetdata, '/account/post')
+api.add_resource(Apidatadelete, '/account/delete')
 
 @app.route('/')
 def welcome():
