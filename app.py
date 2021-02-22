@@ -99,7 +99,7 @@ class Apigetdata(Resource):
         json_data = []
         resultjson = []
         if duser == 'all':
-            cursor.execute("SELECT * FROM '{}'".format(table))
+            cursor.execute("SELECT * FROM {}".format(table))
             row_headers = [x[0] for x in cursor.description]
             result = cursor.fetchall()
             for x in result:
